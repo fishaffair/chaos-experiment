@@ -72,7 +72,7 @@ INFO: updated leader lock during promote
  
   ![Alt text](/img/etcd_alert.png "etcd_alert")
   
-  ![Alt text](/img/cpu_alerts.png "cpu_alerts")
+  ![Alt text](/img/cpu_alert.png "cpu_alerts")
   
   Grafana:
 
