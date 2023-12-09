@@ -1,0 +1,17 @@
+- name: Run stress-ng
+  command: stress-ng --matrix 1 --timeout "{{ stress_timeout }}"
+  async: "{{ async_time }}"
+  poll: 0
+  when: "'cpu' in group_names"
+
+- name: Run stress-ng memory
+  command: stress-ng --vm 2 --vm-bytes 90% --vm-method all --timeout "{{ stress_timeout }}"
+  async: "{{ async_time }}"
+  poll: 0
+  when: "'ram' in group_names"
+
+- name: IO load
+  command: stress-ng --hdd 2 --timeout "{{ stress_timeout }}"
+  async: "{{ async_time }}"
+  poll: 0
+  when: "'io' in group_names"

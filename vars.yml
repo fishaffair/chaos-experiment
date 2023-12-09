@@ -1,0 +1,8 @@
+run_os: true
+run_network: true
+delay_enabled: false
+packet_loss_enabled: true
+chaos_timeout: 200
+stress_timeout: 300
+network_delay: 100ms
+async_time: 60

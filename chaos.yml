@@ -1,0 +1,94 @@
+---
+
+- name: Run chaos experiments
+  become: true
+  become_method: sudo
+  hosts: all
+  tasks:
+
+  - name: Install chaos-tools
+    ansible.builtin.package:
+      name:
+        - stress-ng
+        - iproute2
+        - htop
+        - psmisc
+      state: latest
+
+  - name: Clear rules before making network errors
+    command: tc qdisc del dev {{ ansible_default_ipv4.interface }} root
+    ignore_errors: true
+
+- name: Choose random host for every group
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Network problems
+      add_host:
+        name: "{{ item }}"
+        groups: network
+      with_random_choice: "{{ groups.all }}"
+
+    - name: Etcd service stop
+      add_host:
+        name: "{{ item }}"
+        groups: etcd
+      with_random_choice: "{{ groups['etcd_cluster'] }}"
+
+    - name: Patroni service stop
+      add_host:
+        name: "{{ item }}"
+        groups: psql
+      with_random_choice: "{{ groups['postgres_cluster'] }}"
+
+    - name: Cpu load
+      add_host:
+        name: "{{ item }}"
+        groups: cpu
+      with_random_choice: "{{ groups.all }}"
+
+    - name: Ram load
+      add_host:
+        name: "{{ item }}"
+        groups: ram
+      with_random_choice: "{{ groups.all }}"
+      
+    - name: IO load
+      add_host:
+        name: "{{ item }}"
+        groups: io
+      with_random_choice: "{{ groups.all }}"
+
+- name: Checking hosts
+  hosts: all
+  gather_facts: false
+  tasks:
+    - debug: var=group_names
+      
+- name: Make chaos!!!
+  hosts: all
+  become: true
+  gather_facts: false
+  vars_files: vars.yml
+  roles: 
+    - { role: network , when: "'network' in group_names and run_network == true"  }
+    - { role: systemd , when: "'etcd' in group_names" , service: etcd}
+    - { role: systemd , when: "'psql' in group_names", service: patroni }
+    - { role: os , when: run_os == 'true' }
+
+- name: Waiting "{{ chaos_timeout }}" seconds for system reaction
+  hosts: localhost
+  vars_files: vars.yml
+  gather_facts: false
+  tasks:
+   - pause:
+       seconds: "{{ chaos_timeout }}" 
+
+- name: Rollback chaos
+  become: true
+  gather_facts: false
+  hosts: all
+  vars_files: vars.yml
+  roles: 
+    - role: rollback
+  tags: rollback

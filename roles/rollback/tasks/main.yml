@@ -1,0 +1,20 @@
+- name: Disable network problems
+  command: tc qdisc del dev {{ ansible_default_ipv4.interface }} root
+  when: 
+    - "'network' in group_names"
+    - run_network == true
+
+- name: Start services
+  systemd_service:
+    name: "{{ service_rollback }}"
+    state: restarted
+  vars:
+     service_rollback: "{{ 'patroni' if 'psql' in group_names else 'etcd' }}"
+  when: "'etcd' in group_names or 'psql' in group_names"
+
+- name: Stop ram,cpu,io load
+  command: killall stress-ng --wait
+  when: 
+    - "'ram' in group_names or 'cpu' in group_names or 'io' in group_names"
+    - run_os == true
+  ignore_errors: true

@@ -1,0 +1,5 @@
+- name: Stop service
+  systemd_service:
+    name: "{{ item }}"
+    state: stopped
+  with_items: "{{ service }}"

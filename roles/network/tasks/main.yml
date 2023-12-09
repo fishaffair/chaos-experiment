@@ -1,0 +1,7 @@
+- name: Create network delay
+  command: tc qdisc add dev {{ ansible_default_ipv4.interface }} root netem delay {{ network_delay }} 0ms
+  when: delay_enabled == true
+  
+- name: Create packet loss
+  command: tc qdisc add dev {{ ansible_default_ipv4.interface }} root netem loss 25% 25%
+  when: packet_loss_enabled == true
